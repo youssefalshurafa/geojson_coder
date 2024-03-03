@@ -12,6 +12,7 @@ export default function HomePage() {
     const [modifiedGeoJSON, setModifiedGeoJSON] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [codeInitial, setCodeInitial] = useState<string | null>(null);
+    const [propertyName, setpropertyName] = useState<string>('ADM1_PCODE');
     const { toast } = useToast();
     // Function to handle file selection
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -26,20 +27,20 @@ export default function HomePage() {
         }
     };
     const addAdmin1PCode = () => {
-        if (!geoJSON) return; // Check if geoJSON is null
-        if (!codeInitial) return; // Check if geoJSON is null
+        if (!geoJSON || !propertyName || !codeInitial) return;
+
         setIsLoading(true);
-        const geoJSONObject = JSON.parse(geoJSON); // Parse the GeoJSON string
+        const geoJSONObject = JSON.parse(geoJSON);
         let counter = 1;
         geoJSONObject.features.forEach((feature: any) => {
-            const admin1PCode = `${codeInitial}${String(counter).padStart(
+            const propertyValue = `${codeInitial}${String(counter).padStart(
                 3,
                 '0'
             )}`;
-            feature.properties.ADMIN1_PCODE = admin1PCode;
+            feature.properties[propertyName] = propertyValue;
             counter++;
         });
-        const modifiedGeoJSONString = JSON.stringify(geoJSONObject); // Convert the modified GeoJSON object back to string
+        const modifiedGeoJSONString = JSON.stringify(geoJSONObject);
         setModifiedGeoJSON(modifiedGeoJSONString);
         setIsLoading(false);
     };
@@ -62,37 +63,48 @@ export default function HomePage() {
         e.preventDefault();
         console.log(codeInitial);
 
-        if (!geoJSON || !codeInitial) return;
+        if (!geoJSON || !codeInitial || !propertyName) return;
         await addAdmin1PCode();
         toast({
             description: 'Your geojson has been modified.',
+            duration: 800,
         });
     };
     console.log(isLoading);
 
     return (
-        <main className="p-12 flex flex-col justify-center items-center gap-8  h-screen text-slate-950">
-            <h1 className="text-center text-4xl font-semibold font-in ">
+        <main className="p-12 flex flex-col justify-center items-center gap-8   h-screen text-slate-950">
+            <h1 className="text-center text-6xl    font-montserrat  ">
                 Geojson Editor
             </h1>
             <form
                 onSubmit={handleSubmit}
                 className="flex flex-col  gap-8 items-center glass p-4 rounded-md "
             >
-                <div className="flex w-full  justify-between items-center gap-2 ">
-                    <Label>Insert your geojson</Label>
+                <div className="flex flex-col  w-full  gap-2 ">
+                    <Label className="font-bold">Insert your geojson:</Label>
                     <Input
                         onChange={handleFileChange}
-                        className=" w-[10rem] mt-2"
+                        className=" w-[15rem] mt-2"
                         type="file"
                         required
                     />
                 </div>
-                <div className="flex w-full  justify-between items-center gap-2   ">
-                    <Label>Code initials</Label>
+                <div className="flex flex-col  w-full  gap-2   ">
+                    <Label className="font-bold">Property name:</Label>
+                    <Input
+                        onChange={(e) => setpropertyName(e.target.value)}
+                        className=" w-[15rem] mt-2 text-black text-sm"
+                        placeholder="example: ADMIN1_PCODE"
+                        type="text"
+                        required
+                    />
+                </div>
+                <div className="flex flex-col  w-full  gap-2   ">
+                    <Label className="font-bold">Code initials:</Label>
                     <Input
                         onChange={(e) => setCodeInitial(e.target.value)}
-                        className=" w-[10rem] mt-2 text-black"
+                        className=" w-[15rem] mt-2 text-black text-sm"
                         placeholder="example: UG"
                         type="text"
                         required
@@ -109,7 +121,9 @@ export default function HomePage() {
                 </Button>
             </form>
             <Button
-                disabled={!geoJSON || !codeInitial ? true : false}
+                disabled={
+                    !geoJSON || !codeInitial || !propertyName ? true : false
+                }
                 className="w-max"
                 onClick={handleDownload}
             >
